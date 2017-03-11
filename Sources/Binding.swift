@@ -1,4 +1,4 @@
-class Binding {
+public class Binding {
   private let unbind: () -> Void
 
   init(unbind: @escaping () -> Void) {

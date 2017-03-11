@@ -1,37 +1,41 @@
 import Foundation
 
-class Signal<T> {
-  typealias Sink = (T) -> Void
-  typealias Listener = (T) -> Void
+public class Signal<T> {
+  public typealias Sink = (T) -> Void
+  public typealias Listener = (T) -> Void
 
-  var listeners: [UUID : Listener] = [:]
+  internal var listeners: [UUID : Listener] = [:]
   let queue: DispatchQueue
 
-  static func make(queue: DispatchQueue = .main) -> (Sink, Signal<T>) {
+  public static func make(queue: DispatchQueue = .main) -> (Sink, Signal<T>) {
     let signal = Signal(queue: queue)
 
     return (signal.push, signal)
   }
 
-  private init(queue: DispatchQueue) {
+  internal init(queue: DispatchQueue) {
     self.queue = queue
   }
 
-  func bind(listener: @escaping Listener) -> Binding {
+  public func bind(listener: @escaping Listener) -> Binding {
     let token = UUID()
     let binding = Binding(unbind: { [weak self] in
-      _ = self?.listeners.removeValue(forKey: token)
+      self?.unbind(token: token)
     })
     listeners[token] = listener
 
     return binding
   }
 
-  private func push(value: T) {
+  internal func push(value: T) {
     queue.async {
       for listener in self.listeners.values {
         listener(value)
       }
     }
+  }
+
+  internal func unbind(token: UUID) {
+    _ = listeners.removeValue(forKey: token)
   }
 }
